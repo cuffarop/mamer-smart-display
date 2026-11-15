@@ -1,8 +1,162 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><title>Mamer Smart Display</title><style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:-apple-system,Helvetica,Arial,sans-serif;color:white;background:#152a3c}#bg{position:fixed;inset:0;background:linear-gradient(130deg,#153451,#546d73);background-position:center;background-size:cover;z-index:0}#shade{position:fixed;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.53),rgba(0,0,0,.12) 45%,rgba(0,0,0,.65));z-index:1}.app{position:relative;z-index:2;min-height:100%;padding:22px 30px;display:flex;flex-direction:column;justify-content:space-between}.top{display:flex;justify-content:space-between;align-items:flex-start}.clock{font-size:94px;font-weight:200;line-height:1;letter-spacing:-3px}.date{font-size:20px;margin-top:8px}.current{text-align:right}.temp{font-size:70px;font-weight:200}.condition{font-size:20px}.tabs{display:flex;justify-content:center;gap:10px;margin:12px 0}.tabs button{border:1px solid rgba(255,255,255,.45);border-radius:25px;padding:11px 18px;background:rgba(0,0,0,.33);color:white;font-size:18px}.tabs button.active{background:rgba(255,255,255,.3);border-color:white}.bottom{display:flex;gap:14px}.panel{background:rgba(9,23,35,.56);border:1px solid rgba(255,255,255,.23);border-radius:15px;padding:15px 18px}.forecast{flex:2}.details{flex:1}.heading{font-size:16px;opacity:.9;margin-bottom:12px}.days{display:flex;justify-content:space-between;gap:6px}.day{text-align:center;flex:1;font-size:16px}.day .symbol{font-size:26px;margin:6px 0}.minor{font-size:14px;opacity:.8}.sun{margin-top:8px;font-size:17px;line-height:1.8}.cities{font-size:14px;margin-top:10px;opacity:.92}.status{font-size:12px;opacity:.8;margin-top:8px}@media(max-width:750px){.app{padding:14px}.clock{font-size:62px}.temp{font-size:46px}.bottom{gap:7px}.panel{padding:10px}.day{font-size:12px}.tabs button{font-size:14px;padding:9px 10px}.sun{font-size:13px}}@media(orientation:portrait){.bottom{flex-direction:column}.clock{font-size:76px}.temp{font-size:55px}}
-</style></head><body><div id="bg"></div><div id="shade"></div><div class="app"><div><div class="top"><div><div class="clock" id="clock">--:--</div><div class="date" id="date">Chargement...</div></div><div class="current"><div class="temp" id="temp">--°</div><div class="condition" id="condition">Météo en cours...</div><div id="cityname">Mamer</div></div></div><div class="tabs"><button id="b0" onclick="choose(0)">Mamer</button><button id="b1" onclick="choose(1)">La Louvière</button><button id="b2" onclick="choose(2)">Montréal</button></div></div><div class="bottom"><div class="panel forecast"><div class="heading">Prévisions sur 5 jours</div><div class="days" id="days">Chargement des prévisions...</div><div class="cities" id="cities"></div></div><div class="panel details"><div class="heading">Soleil & conditions</div><div class="sun" id="sun">Lever : --:--<br>Coucher : --:--</div><div class="status" id="status">Connexion météo...</div></div></div></div><script>
-// JavaScript ES5 compatible avec Safari iOS 12.
-var places=[{name:'Mamer',lat:49.627,lon:6.024,tz:'Europe/Luxembourg',pics:['https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1400&q=75','https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1400&q=75']},{name:'La Louvière',lat:50.478,lon:4.188,tz:'Europe/Brussels',pics:['https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=1400&q=75','https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1400&q=75']},{name:'Montréal',lat:45.502,lon:-73.567,tz:'America/Toronto',pics:['https://images.unsplash.com/photo-1519178614-68673b201f36?w=1400&q=75','https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1400&q=75']}];
-var selected=0,photoIndex=0,cache=[null,null,null];function el(id){return document.getElementById(id)}function pad(n){return n<10?'0'+n:''+n}function clock(){var d=new Date();el('clock').innerHTML=pad(d.getHours())+':'+pad(d.getMinutes());el('date').innerHTML=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}function symbol(c){if(c===0)return '☀';if(c<=3)return '⛅';if(c===45||c===48)return '🌫';if(c>=51&&c<=67)return '🌧';if(c>=71&&c<=77)return '❄';if(c>=80&&c<=82)return '🌦';if(c>=95)return '⛈';return '☁'}function desc(c){if(c===0)return 'Ciel dégagé';if(c<=3)return 'Nuageux / éclaircies';if(c===45||c===48)return 'Brouillard';if(c>=51&&c<=67)return 'Pluie';if(c>=71&&c<=77)return 'Neige';if(c>=80&&c<=82)return 'Averses';if(c>=95)return 'Orage';return 'Variable'}function timePart(s){return s?s.substr(11,5):'--:--'}function bg(){var p=places[selected];var url=p.pics[photoIndex%p.pics.length];el('bg').style.backgroundImage='linear-gradient(130deg,#153451,#546d73),url("'+url+'")';photoIndex++}function choose(n){selected=n;photoIndex=0;for(var i=0;i<3;i++)el('b'+i).className=i===n?'active':'';el('cityname').innerHTML=places[n].name;bg();render();}function render(){var d=cache[selected];if(!d){el('temp').innerHTML='--°';el('condition').innerHTML='Chargement...';el('days').innerHTML='Connexion météo...';return}var c=d.current||{},daily=d.daily||{};el('temp').innerHTML=Math.round(c.temperature_2m)+'°';el('condition').innerHTML=symbol(c.weather_code)+' '+desc(c.weather_code);var h='';for(var i=0;i<5&&daily.time&&i<daily.time.length;i++){var day=new Date(daily.time[i]+'T12:00:00');h+='<div class="day"><div>'+day.toLocaleDateString('fr-FR',{weekday:'short'})+'</div><div class="symbol">'+symbol(daily.weather_code[i])+'</div><div>'+Math.round(daily.temperature_2m_max[i])+'°</div><div class="minor">'+Math.round(daily.temperature_2m_min[i])+'°</div></div>'}el('days').innerHTML=h;el('sun').innerHTML='☀ Lever : '+timePart(daily.sunrise[0])+'<br>☾ Coucher : '+timePart(daily.sunset[0])+'<br>Ressenti : '+Math.round(c.apparent_temperature)+'°';el('status').innerHTML='Données météo : '+(d._cached?'dernières données disponibles':'actualisées');var names='';for(var j=0;j<3;j++)names+=(j?'  ·  ':'')+places[j].name+' '+(cache[j]?Math.round(cache[j].current.temperature_2m)+'°':'--°');el('cities').innerHTML=names;}
-function load(n){var p=places[n],url='https://api.open-meteo.com/v1/forecast?latitude='+p.lat+'&longitude='+p.lon+'&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=5&timezone='+encodeURIComponent(p.tz);var x=new XMLHttpRequest();x.open('GET',url,true);x.timeout=15000;x.onreadystatechange=function(){if(x.readyState===4){if(x.status===200){try{var d=JSON.parse(x.responseText);if(d.current&&d.daily){cache[n]=d;try{localStorage.setItem('weather'+n,JSON.stringify(d))}catch(e){};render();return}}catch(e){}}el('status').innerHTML='Météo indisponible : dernières données si présentes';render()}};x.onerror=function(){el('status').innerHTML='Connexion météo indisponible'};try{x.send()}catch(e){el('status').innerHTML='Erreur de connexion'}}function refresh(){for(var i=0;i<3;i++)load(i)}for(var k=0;k<3;k++){try{var saved=localStorage.getItem('weather'+k);if(saved){cache[k]=JSON.parse(saved);cache[k]._cached=true}}catch(e){}}clock();setInterval(clock,1000);choose(0);refresh();setInterval(refresh,30*60*1000);setInterval(bg,10*60*1000);
-</script></body></html>
+
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mamer Smart Display V4</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;font-family:Arial,sans-serif;color:white;background:#14283a}
+#bg{position:fixed;inset:0;background:#14283a center/cover no-repeat;z-index:0}
+#shade{position:fixed;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.55),rgba(0,0,0,.08) 45%,rgba(0,0,0,.75));z-index:1}
+.app{position:relative;z-index:2;min-height:100vh;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.top{display:flex;justify-content:space-between}
+.clock{font-size:90px;font-weight:200}
+.date{font-size:20px}
+.current{text-align:right}
+.temp{font-size:65px}
+.tabs{text-align:center;margin:15px}
+button{background:rgba(0,0,0,.4);color:white;border:1px solid white;border-radius:25px;padding:10px 18px;font-size:17px;margin:4px}
+button.active{background:rgba(255,255,255,.35)}
+.bottom{display:flex;gap:12px}
+.panel{background:rgba(10,25,40,.65);border:1px solid rgba(255,255,255,.3);border-radius:15px;padding:15px}
+.forecast{flex:2}
+.details{flex:1}
+.days{display:flex;justify-content:space-around;text-align:center}
+.day{flex:1}
+.symbol{font-size:28px;margin:8px}
+.heading{margin-bottom:15px}
+.sun{line-height:2}
+@media(orientation:portrait){.bottom{flex-direction:column}.clock{font-size:65px}}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="shade"></div>
+<div class="app">
+<div>
+<div class="top">
+<div>
+<div class="clock" id="clock">--:--</div>
+<div class="date" id="date"></div>
+</div>
+<div class="current">
+<div class="temp" id="temp">--°</div>
+<div id="condition">Chargement...</div>
+<div id="cityname">Mamer</div>
+</div>
+</div>
+<div class="tabs">
+<button id="b0" onclick="choose(0)">Mamer</button>
+<button id="b1" onclick="choose(1)">La Louvière</button>
+<button id="b2" onclick="choose(2)">Montréal</button>
+</div>
+</div>
+<div class="bottom">
+<div class="panel forecast">
+<div class="heading">Prévisions sur 5 jours</div>
+<div class="days" id="days"></div>
+</div>
+<div class="panel details">
+<div class="heading">Soleil & conditions</div>
+<div class="sun" id="sun">Chargement...</div>
+<div id="status"></div>
+</div>
+</div>
+</div>
+<script>
+var places=[
+{name:"Mamer",lat:49.627,lon:6.024,tz:"Europe/Luxembourg"},
+{name:"La Louvière",lat:50.478,lon:4.188,tz:"Europe/Brussels"},
+{name:"Montréal",lat:45.502,lon:-73.567,tz:"America/Toronto"}
+];
+var photos={
+day:[
+"https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1400",
+"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1400"
+],
+night:[
+"https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1400",
+"https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?w=1400"
+]
+};
+var selected=0,photoIndex=0,cache=[null,null,null];
+function el(id){return document.getElementById(id)}
+function pad(n){return n<10?"0"+n:n}
+function cityDate(){
+var d=new Date(),p=places[selected];
+try{
+var f=new Intl.DateTimeFormat("fr-FR",{timeZone:p.tz,hour:"2-digit",minute:"2-digit",hour12:false});
+el("clock").innerHTML=f.format(d);
+el("date").innerHTML=new Intl.DateTimeFormat("fr-FR",{timeZone:p.tz,weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(d);
+}catch(e){
+el("clock").innerHTML=pad(d.getHours())+":"+pad(d.getMinutes());
+el("date").innerHTML=d.toLocaleDateString("fr-FR");
+}
+}
+function hour(){
+try{
+return parseInt(new Intl.DateTimeFormat("en-GB",{timeZone:places[selected].tz,hour:"2-digit",hour12:false}).format(new Date()),10);
+}catch(e){return new Date().getHours()}
+}
+function background(){
+var h=hour(),arr=(h>=7&&h<19)?photos.day:photos.night;
+var url=arr[photoIndex%arr.length];
+var img=new Image();
+img.onload=function(){el("bg").style.backgroundImage='url("'+url+'")'};
+img.src=url;
+photoIndex++;
+}
+function symbol(c){
+if(c===0)return "☀️";
+if(c<=3)return "⛅";
+if(c>=51&&c<=67)return "🌧️";
+if(c>=71&&c<=77)return "❄️";
+if(c>=80&&c<=82)return "🌦️";
+if(c>=95)return "⛈️";
+return "☁️";
+}
+function choose(n){
+selected=n;photoIndex=0;
+for(var i=0;i<3;i++)el("b"+i).className=i===n?"active":"";
+el("cityname").innerHTML=places[n].name;
+cityDate();background();render();
+}
+function render(){
+var d=cache[selected];
+if(!d)return;
+var c=d.current,dy=d.daily;
+el("temp").innerHTML=Math.round(c.temperature_2m)+"°";
+el("condition").innerHTML=symbol(c.weather_code);
+var h="";
+for(var i=0;i<5;i++){
+var day=new Date(dy.time[i]+"T12:00:00");
+h+='<div class="day">'+day.toLocaleDateString("fr-FR",{weekday:"short"})+'<div class="symbol">'+symbol(dy.weather_code[i])+'</div>'+Math.round(dy.temperature_2m_max[i])+'°<div>'+Math.round(dy.temperature_2m_min[i])+'°</div></div>';
+}
+el("days").innerHTML=h;
+el("sun").innerHTML="☀ Lever : "+dy.sunrise[0].substr(11,5)+"<br>☾ Coucher : "+dy.sunset[0].substr(11,5)+"<br>Ressenti : "+Math.round(c.apparent_temperature)+"°";
+el("status").innerHTML="Météo actualisée";
+}
+function load(n){
+var p=places[n];
+var url="https://api.open-meteo.com/v1/forecast?latitude="+p.lat+"&longitude="+p.lon+"&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=5&timezone="+encodeURIComponent(p.tz);
+var x=new XMLHttpRequest();
+x.open("GET",url,true);
+x.onreadystatechange=function(){
+if(x.readyState===4&&x.status===200){
+try{cache[n]=JSON.parse(x.responseText);if(n===selected)render()}catch(e){}
+}
+};
+x.send();
+}
+function refresh(){for(var i=0;i<3;i++)load(i)}
+choose(0);refresh();
+setInterval(cityDate,1000);
+setInterval(background,600000);
+setInterval(refresh,1800000);
+</script>
+</body>
+</html>
+
