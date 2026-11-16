@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Mamer Smart Display — Style chaleureux V17</title>
+<title>Mamer Smart Display — V18 · photos saisonnières</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;width:100%;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#28313c}
@@ -66,29 +66,30 @@ html,body{margin:0;min-height:100%;width:100%;font-family:Arial,Helvetica,sans-s
  </div>
 </div>
 <script>
-// Photos, météo, fuseaux horaires et rotation de la V16 conservés.
-function photo(file,author){return {url:"https://commons.wikimedia.org/wiki/Special:FilePath/"+encodeURIComponent(file)+"?width=1280",link:"https://commons.wikimedia.org/wiki/File:"+encodeURIComponent(file),author:author}}
+// V18 — 24 illustrations IA saisonnières organisées par ville.
+// Les images appartiennent au dossier photos/ joint au ZIP.
+function photosFor(city){
+ var keys=["printemps","ete","automne","hiver"],r={};
+ for(var i=0;i<keys.length;i++)r[keys[i]]=[
+  {url:"photos/"+city+"/"+keys[i]+"-1.jpg",author:"Illustration générée par IA"},
+  {url:"photos/"+city+"/"+keys[i]+"-2.jpg",author:"Illustration générée par IA"}
+ ];
+ return r;
+}
 var places=[
- {name:"Mamer",lat:49.627,lon:6.024,tz:"Europe/Luxembourg",photos:[
-  photo("Mamer, vue générale (101).jpg","Mamer · Wikimedia Commons"),
-  photo("Mamer, rue du Marché 2019.jpg","Mamer · Wikimedia Commons"),
-  photo("Mamer-Capellen – Paysage rural 2025a.jpg","Mamer · Cayambe / Wikimedia Commons"),
-  photo("Kierch Mamer.jpg","Mamer · MMFE / Wikimedia Commons")
- ]},
- {name:"La Louvière",lat:50.478,lon:4.188,tz:"Europe/Brussels",photos:[
-  photo("Aerial view of Strépy-Thieu boat lift.jpg","Strépy-Thieu · Union européenne / Wikimedia Commons"),
-  photo("Place de la Louve à La Louvière.jpg","La Louvière · Lo-Olivier / Wikimedia Commons"),
-  photo("Strépy-Thieu boat lift (DSCF7987).jpg","Strépy-Thieu · Wikimedia Commons"),
-  photo("La Louvière - Boulevard Michel Debauque - 2024-05-09.jpg","La Louvière · Le Sharkoïste / Wikimedia Commons")
- ]},
- {name:"Montréal",lat:45.502,lon:-73.567,tz:"America/Toronto",photos:[
-  photo("Montreal, Quebec skyline.jpg","Montréal · Quintin Soloviev / Wikimedia Commons"),
-  photo("Montréal - Skyline - Nuit.jpg","Montréal · LaurentWillen / Wikimedia Commons"),
-  photo("Montreal skyline night.jpg","Montréal · Anirudh Koul / Wikimedia Commons"),
-  photo("Montreal skyline by night.jpg","Montréal · Richard Bartz / Wikimedia Commons")
- ]}
+{name:"Mamer",lat:49.627,lon:6.024,tz:"Europe/Luxembourg",photos:photosFor("mamer")},
+{name:"La Louvière",lat:50.478,lon:4.188,tz:"Europe/Brussels",photos:photosFor("la-louviere")},
+{name:"Montréal",lat:45.502,lon:-73.567,tz:"America/Toronto",photos:photosFor("montreal")}
 ];
-var selected=0,cityPhotoIndex=[0,0,0],cache=[null,null,null],lastNight=-1,photoTicket=0;
+function season(){
+ var m=new Date().getMonth()+1;
+ try{m=parseInt(new Intl.DateTimeFormat("en-US",{timeZone:places[selected].tz,month:"numeric"}).format(new Date()),10)}catch(e){}
+ if(m>=3&&m<=5)return "printemps";
+ if(m>=6&&m<=8)return "ete";
+ if(m>=9&&m<=11)return "automne";
+ return "hiver";
+}
+var selected=0,cityPhotoIndex=[0,0,0],cache=[null,null,null],lastNight=-1,photoTicket=0,lastSeason="";
 function el(id){return document.getElementById(id)}
 function pad(n){return n<10?"0"+n:""+n}
 function cityTimeOptions(){return places[selected].tz}
@@ -99,14 +100,14 @@ function cityDate(){var d=new Date(),tz=cityTimeOptions();try{
 function hour(){try{return parseInt(new Intl.DateTimeFormat("en-GB",{timeZone:cityTimeOptions(),hour:"2-digit",hour12:false}).format(new Date()),10)}catch(e){return new Date().getHours()}}
 function night(){var h=hour();return h<7||h>=19}
 function background(){
- var n=night(),items=places[selected].photos,city=selected,index=cityPhotoIndex[city]%items.length,ticket=++photoTicket;
- lastNight=n?1:0;
+ var n=night(),items=places[selected].photos[season()],city=selected,index=cityPhotoIndex[city]%items.length,ticket=++photoTicket;
+ lastNight=n?1:0;lastSeason=season();
  el("nightShade").style.backgroundColor=n?"rgba(16,11,29,.39)":"rgba(5,12,30,0)";
  function attempt(tries){
   if(ticket!==photoTicket||city!==selected)return;
   var item=items[(index+tries)%items.length];
   el("bg").style.backgroundImage='url("'+item.url+'")';
-  el("credit").innerHTML='<a href="'+item.link+'" target="_blank">Photo : '+item.author+'</a>';
+  el("credit").innerHTML="Illustration IA · "+places[selected].name+" · "+season();
   var test=new Image();
   test.onerror=function(){if(ticket===photoTicket&&tries+1<items.length)attempt(tries+1)};
   test.src=item.url;
@@ -127,7 +128,7 @@ function load(n){var p=places[n],url="https://api.open-meteo.com/v1/forecast?lat
  x.open("GET",url,true);x.onreadystatechange=function(){if(x.readyState===4){if(x.status===200){try{cache[n]=JSON.parse(x.responseText);if(n===selected)render()}catch(e){}}else if(n===selected){el("status").innerHTML="Météo temporairement indisponible"}}};x.send()}
 function refresh(){for(var i=0;i<3;i++)load(i)}
 choose(0);refresh();
-setInterval(function(){cityDate();var state=night()?1:0;if(state!==lastNight){background()}},30000);
+setInterval(function(){cityDate();var state=night()?1:0;if(state!==lastNight||season()!==lastSeason){background()}},30000);
 setInterval(background,600000);
 setInterval(refresh,1800000);
 </script>

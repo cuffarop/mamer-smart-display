@@ -1,0 +1,32 @@
+MAMER SMART DISPLAY V18 — VERSION D'ESSAI INSTALLABLE
+================================================
+La version V17 n'est pas modifiée automatiquement. Publier ce pack remplace le site en ligne.
+
+Contenu :
+- index.html : design V17, horloges et météo conservés
+- photos/ : 24 images JPEG, 2 par saison pour chaque ville
+
+INSTALLATION :
+1. Décompresser le ZIP.
+2. Sur GitHub > cuffarop/mamer-smart-display > Add file > Upload files,
+   déposer index.html ET le dossier photos avec ses sous-dossiers.
+   Sur GitHub, vérifier que les fichiers apparaissent dans photos/mamer/,
+   photos/la-louviere/ et photos/montreal/.
+3. Commit changes.
+4. Tester https://cuffarop.github.io/mamer-smart-display/?v=18
+
+FONCTIONNEMENT :
+- Printemps mars-mai ; été juin-août ; automne septembre-novembre ; hiver décembre-février.
+- Rotation toutes les 10 minutes et chaque clic sur ville ; heure locale de la ville.
+- Filtre nocturne conservé. L'horaire est fixé à 19 h–7 h.
+
+QUALITÉ / LIMITES HONNÊTES :
+- Les images de Mamer (hors hiver), ainsi que les vues principales de La Louvière et
+  de Montréal en été/automne, sont préparées à partir d'illustrations individuelles.
+- D'autres scènes, notamment les scènes hivernales, restent issues des planches IA
+  de sélection et seront moins nettes. Certaines vues utilisent une même source avec
+  un cadrage différent, donc ce ne sont pas 24 prises de vue uniques haute résolution.
+- Ces images sont des concepts IA inspirés des villes, et non des photos de lieux certifiées.
+
+Ce pack peut être testé et publié comme première V18 ; une collection photographique
+100 % individuelle et native serait une amélioration ultérieure.
